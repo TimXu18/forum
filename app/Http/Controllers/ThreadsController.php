@@ -23,25 +23,25 @@ class ThreadsController extends Controller
      */
     public function index(Channel $channel, ThreadFilters $filters)
     {
-        if ($channel->exists) {
-//            $channelId = Channel::where('slug', $channelSlug)->first()->id;
-            $threads = $channel->threads()->latest();
-        } else {
-            $threads = Thread::latest();
+        $threads = $this->getThreads($channel, $filters);
+
+        if(request()->wantsJson()){
+            return $threads;
         }
 
-        // if request('by'), we need to filter by given username
-//        if ($username = request('by')) {
-//            $user = \App\User::where('name', $username)->firstOrFail();
-//
-//            $threads->where('user_id', $user->id);
-//        }
-        $threads = $threads->filter($filters)->get();
-
-
-       // $threads = Thread::filter($filters)->get();
-      //  $threads = $this->getThreads($channel);
         return view('threads.index', compact('threads'));
+    }
+
+    protected function getThreads(Channel $channel, ThreadFilters $filters)
+    {
+        // if request('by'), we need to filter by given username
+        $threads = Thread::latest()->filter($filters);
+
+        if($channel->exists){
+            $threads = $threads->where('channel_id', $channel->id);
+        }
+//        dd($threads->toSql());
+        return $threads->get();
     }
 
     /**
@@ -76,7 +76,8 @@ class ThreadsController extends Controller
             'body' => $request['body'],
         ]);
 
-        return redirect($thread->path());
+        return redirect($thread->path())
+               ->with('flash', 'You thread has been published!');
     }
 
     /**
@@ -88,6 +89,9 @@ class ThreadsController extends Controller
      */
     public function show($channelSlug, Thread $thread)
     {
+//        return $thread->replies;
+//        return Thread::withCount('replies')->find(102);
+        // compact('thread') equals ['thread' => $thread]
         return view('threads.show', compact('thread'));
     }
 
@@ -120,9 +124,23 @@ class ThreadsController extends Controller
      * @param  \App\Thread  $thread
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Thread $thread)
+    public function destroy($channel, Thread $thread)
     {
-        //
+        $this->authorize('update', $thread);
+//        if($thread->id != auth()->id()){
+//            if(request()->wantsJson()){
+//                return response(['status' => 'Permission Denied'], 403);
+//            }
+//            return redirect('/login');
+//            abort(403, 'You do not have permission to do this');
+//        }
+
+        $thread->delete();
+
+        if(request()->wantsJson()){
+            return response([], 204);
+        }
+        return redirect('/threads');
     }
 
 }

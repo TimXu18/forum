@@ -1,44 +1,57 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
-        <div class="row">
-            <div class="col-md-8 col-md-offset-2">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <a href="#">{{ $thread->creator->name }}</a> posted:
-                        {{ $thread->title }}
-                    </div>
-                    <div class="panel-body">
-                        {{ $thread->body }}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-8 col-md-offset-2">
-                @foreach($thread->replies as $reply)
-                    @include ('threads.reply')
-                @endforeach
-            </div>
-        </div>
-
-        @if (auth()->check())
+    <thread-view :initial-replies-count="{{$thread->replies_count}}" inline-template>
+        <div class="container">
             <div class="row">
-                <div class="col-md-8 col-md-offset-2">
-                    <form method="POST" action="{{ $thread->path().'/replies' }}">
-                        {{ csrf_field() }}
-                        <div class="form-group">
-                            <textarea name="body" id="body" rows="5" class="form-control" placeholder="Have something to say?"></textarea>
-                        </div>
+                <div class="col-md-8">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div class="level">
+                            <span class="flex">
+                            <a href="{{ route('profile', $thread->creator) }}">{{ $thread->creator->name }}</a> posted:
+                                {{ $thread->title }}
+                            </span>
 
-                        <button type="submit" class="btn btn-default">Post </button>
-                    </form>
+                                @can('update', $thread)
+                                    <form method="POST" action="{{ $thread->path() }}">
+                                        {{ csrf_field() }}
+                                        {{ method_field('DELETE') }}
+
+                                        <button type="submit" class="btn btn-link">Delete Thread</button>
+                                    </form>
+                                @endcan
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            {{ $thread->body }}
+                        </div>
+                    </div>
+
+                    <replies v-on:added="repliesCount++"
+                             v-on:removed="repliesCount--"></replies>
+
+                    {{--@foreach($replies as $reply)--}}
+                    {{--@include ('threads.reply')--}}
+                    {{--@endforeach--}}
+
+                    {{--{{ $replies->links() }}--}}
+                </div>
+
+                <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <p>
+                                This thread is published {{ $thread->created_at->diffForHumans() }}
+                                by <a href="#">{{ $thread->creator->name }}</a>, and currently
+                                has <span v-text="repliesCount"></span> {{ str_plural('comment', $thread->replies_count) }}.
+                            </p>
+
+                            <subscribe-button></subscribe-button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        @else
-            <p class="text-center">Please <a href="{{ route('login') }}">sign in</a> to participate in this discussion</p>
-        @endif
-    </div>
+        </div>
+    </thread-view>
 @endsection
