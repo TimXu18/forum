@@ -46,7 +46,7 @@
 
         methods: {
             broadcast(){
-                this.$emit(' updatePage', this.page);
+                this.$emit('updatePage', this.page);
 
                 return this;
             },

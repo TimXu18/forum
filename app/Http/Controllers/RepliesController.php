@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Reply;
+use App\Inspections\Spam;
 use Illuminate\Http\Request;
 use App\Thread;
 
@@ -17,19 +18,22 @@ class RepliesController extends Controller
     {
         // laravel paginate() method will get page parameter value in URL
         // eg. forum.test/threads/channel1/replies?page=1
-        return $thread->replies()->paginate(1);
+        return $thread->replies()->paginate(2);
     }
 
     /**
      * @param $channel
      * @param Thread $thread
+     * @param Spam $spam
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function store($channel, Thread $thread)
+    public function store($channel, Thread $thread, Spam $spam)
     {
         $this->validate(request(), [
             'body' => 'required'
         ]);
+
+        $spam->detect(request('body'));
 
         $reply = $thread->addReply([
             'body' => request('body'),

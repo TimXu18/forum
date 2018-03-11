@@ -1,13 +1,24 @@
 <template>
-    <button class="btn btn-default" @click="subscribe">Subscribe</button>
+    <button v-bind:class="classes" @click="subscribe">Subscribe</button>
 </template>
 
 <script>
     export default {
+        props: ['active'],
+
+        computed: {
+          classes(){
+              return ['btn', this.active ? 'btn-primary' : 'btn-default'];
+          }
+        },
+
         methods: {
             subscribe(){
-                axios.post(location.pathname + '/subscriptions')
-                    .then(flash('You have subscribed this thread.'));
+                let requestType = this.active ? 'delete' : 'post';
+
+                axios[requestType](location.pathname + '/subscriptions');
+
+                this.active = ! this.active;
             }
         }
     }

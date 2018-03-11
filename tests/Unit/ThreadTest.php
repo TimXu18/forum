@@ -2,6 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Notifications\ThreadWasUpdated;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -90,5 +93,57 @@ class ThreadTest extends TestCase
             0,
             $thread->subscriptions()->where('user_id', $user_id)->count()
         );
+    }
+
+
+    /** @test */
+    public function if_an_authenticated_user_subscribed_a_thread()
+    {
+        $thread = create('App\Thread');
+
+        $this->signIn();
+
+        $this->assertFalse($thread->isSubscribedTo);
+
+        $thread->subscribe();
+
+        $this->assertTrue($thread->isSubscribedTo);
+    }
+
+
+    /** @test */
+    public function a_thread_notified_all_registered_subscriber_when_a_reply_is_added()
+    {
+        Notification::fake();
+
+        $this->signIn();
+
+        $this->thread->subscribe();
+
+        $this->thread->addReply([
+            'body' => 'Foobar',
+            'user_id' => 999
+        ]);
+
+        Notification::assertSentTo(auth()->user(), ThreadWasUpdated::class);
+    }
+
+
+    /** @test */
+    public function a_thread_can_check_if_authenticated_user_read_all_replies()
+    {
+        $this->signIn();
+
+        $thread = create('App\Thread');
+
+        // tap method used to remove duplication call auth()->user() method in following statements
+        tap(auth()->user(), function($user) use ($thread){
+            $this->assertTrue($thread->hasUpdatedFor($user));
+
+            $user->read($thread);
+
+            $this->assertFalse($thread->hasUpdatedFor($user));
+        });
+
     }
 }

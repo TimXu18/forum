@@ -30,16 +30,17 @@ class ReadThreadsTest extends TestCase
     }
 
     /** @test */
-    function a_user_can_read_replies_that_are_associated_with_a_thread()
-    {
-        $reply = factory('App\Reply')
-            ->create(['thread_id' => $this->thread->id]);
-
-        // When we visit a thread pge
-        // Then we should see the replies
-        $this->get($this->thread->path())
-            ->assertSee($reply->body);
-    }
+    // Because change to use vuejs load paginated reply data, so it will not show reply body on current page.
+//    function a_user_can_read_replies_that_are_associated_with_a_thread()
+//    {
+//        $reply = factory('App\Reply')
+//            ->create(['thread_id' => $this->thread->id]);
+//
+//        // When we visit a thread pge
+//        // Then we should see the replies
+//        $this->get($this->thread->path())
+//            ->assertSee($reply->body);
+//    }
 
     /** @test */
     function a_user_can_filter_threads_according_to_a_channel()
@@ -95,8 +96,18 @@ class ReadThreadsTest extends TestCase
         create('App\Reply', ['thread_id' => $thread->id], 2);
 
         $response = $this->getJson($thread->path() . '/replies')->json();
-
-        $this->assertCount(1, $response['data']);
+        $this->assertCount(2, $response['data']);
         $this->assertEquals(2, $response['total']);
+    }
+
+
+    function a_user_can_filter_threads_by_those_that_are_unanaswered()
+    {
+        $thread = create('App\Thread');
+        create('App\Reply', ['thread_id' => $thread->id], 2);
+
+        $response = $this->getJson('threads?unanswered=1')->json();
+
+        $this->assertCount(1, $response);
     }
 }

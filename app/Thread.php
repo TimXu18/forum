@@ -2,7 +2,9 @@
 
 namespace App;
 
+use App\Events\ThreadHasNewReply;
 use Illuminate\Database\Eloquent\Model;
+use App\Notifications\ThreadWasUpdated;
 
 class Thread extends Model
 {
@@ -12,13 +14,17 @@ class Thread extends Model
 
     protected $with = ['channel'];
 
+    protected $appends = ['isSubscribedTo'];
+
     protected static function boot()
     {
         parent::boot();
 
-        static::addGlobalScope('replyCount', function($builder){
-            $builder->withCount('replies');
-        });
+        // Add replyCount as a column in threads table instead of
+        // load it every time
+//        static::addGlobalScope('replyCount', function($builder){
+//            $builder->withCount('replies');
+//        });
 
         static::addGlobalScope('creator', function($builder){
            $builder->with('creator');
@@ -53,7 +59,30 @@ class Thread extends Model
 
     public function addReply($reply)
     {
-        return $this->replies()->create($reply);
+        $reply = $this->replies()->create($reply);
+
+        event(new ThreadHasNewReply($this, $reply));
+
+        // Prepare notification for all subscribers
+        // $this->subscriptions() return Eloquent query object
+        // $this->subscriptions return ThreadSubscription Eloquent model object
+//        $this->subscriptions->
+//             filter(function($sub) use($reply){
+//                return $sub->user_id != $reply->user_id;
+//             })
+//            ->each(function($sub) use($reply){
+//                $sub->notify($reply);
+//            });
+        return $reply;
+    }
+
+
+    public function notifySubscriber($reply)
+    {
+        $this->subscriptions
+            ->where('user_id', '!=', $reply->user_id)
+            ->each
+            ->notify($reply);
     }
 
     public function channel()
@@ -72,6 +101,8 @@ class Thread extends Model
         $this->subscriptions()->create(
             ['user_id' => $userId ?: auth()->id()]
         );
+
+        return $this;
     }
 
     public function unsubscribe($userId = null)
@@ -86,8 +117,27 @@ class Thread extends Model
         return $this->hasMany(ThreadSubscription::class);
     }
 
+
+    public function getIsSubscribedToAttribute()
+    {
+        return $this->subscriptions()
+             ->where('user_id', auth()->id())
+            ->exists();
+    }
     /*  public function getReplyCountAttribute()
       {
           return $this->replies()->count();
       }*/
+
+    public function hasUpdatedFor($user = null)
+    {
+        $user = $user ?: auth()->user();
+
+        // Look in the cache for the proper key
+        // Compare the carbon instance with $thread->updated_at
+
+        $key = $user->visitedThreadCacheKey($this);
+
+        return $this->updated_at > cache($key);
+    }
 }

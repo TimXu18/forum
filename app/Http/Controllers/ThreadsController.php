@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Filters\ThreadFilters;
 use App\Thread;
 use App\Channel;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ThreadsController extends Controller
@@ -92,6 +93,14 @@ class ThreadsController extends Controller
 //        return $thread->replies;
 //        return Thread::withCount('replies')->find(102);
         // compact('thread') equals ['thread' => $thread]
+
+        // Record that user visited this page
+        // Record a timestamp
+
+        if(auth()->check()){
+            auth()->user()->read($thread);
+        }
+
         return view('threads.show', compact('thread'));
     }
 
