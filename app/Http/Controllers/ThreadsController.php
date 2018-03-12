@@ -65,11 +65,11 @@ class ThreadsController extends Controller
     {
 //        dd($request->all());
         $this->validate($request, [
-            'title' => 'required',
-            'body' => 'required',
+            'title' => 'required|spamfree',
+            'body' => 'required|spamfree',
             'channel_id' => 'required|exists:channels,id'
         ]);
-//dd($request);
+
         $thread = Thread::create([
             'user_id' => auth()->id(),
             'channel_id' => $request['channel_id'],
