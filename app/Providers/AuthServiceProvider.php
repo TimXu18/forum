@@ -26,8 +26,11 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Gate::before(function($user){
-            if($user->name === 'tim') return true;
-        });
+        // Comment out this because it will make RepliesPolicy create() method
+        // used to prevent user create multiple replies in a minute not working if login
+        // use tim@example.com account
+//        Gate::before(function($user){
+//            if($user->name === 'tim') return true;
+//        });
     }
 }

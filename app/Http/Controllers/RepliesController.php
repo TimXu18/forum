@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Reply;
 use Illuminate\Http\Request;
 use App\Thread;
+use Illuminate\Support\Facades\Gate;
 
 class RepliesController extends Controller
 {
@@ -27,7 +28,13 @@ class RepliesController extends Controller
      */
     public function store($channel, Thread $thread)
     {
+        if(Gate::denies('create', new Reply)) {
+            return response('You are posting too frequently. Please take a break.', 422);
+        }
+
         try {
+//            $this->authorize('create', new Reply);
+
             $this->validate(request(), ['body' => 'required|spamfree']);
 
             $reply = $thread->addReply([
@@ -35,14 +42,17 @@ class RepliesController extends Controller
                 'user_id' => auth()->id()
             ]);
         }catch(\Exception $e){
-            return response('Sorry, your reply could not be saved at this time.', 422);
+            return response(
+                'Sorry, your reply could not be saved at this time.', 422
+            );
         }
 
-        if(request()->expectsJson()){
-            return $reply->load('owner');
-        }
-
-        return redirect($thread->path())->with('flash', 'You reply has been left');
+//        if(request()->expectsJson()){
+//            return $reply->load('owner');
+//        }
+//
+//        return redirect($thread->path())->with('flash', 'You reply has been left');
+        return $reply->load('owner');
     }
 
 
