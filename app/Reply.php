@@ -48,6 +48,13 @@ class Reply extends Model
 
     public function wasJustPublished()
     {
-        return $this->created_at->gt(Carbon::now()->subMinute());
+        return $this->created_at->gt(Carbon::now()->subSeconds(5));
+    }
+
+    public function mentionedUsers()
+    {
+        preg_match_all('/\@([^\s.,]+)/', $this->body, $matches);
+
+        return $matches[1];
     }
 }

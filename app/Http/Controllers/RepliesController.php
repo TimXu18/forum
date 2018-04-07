@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreatePostRequest;
+use App\Notifications\YouWereMentioned;
 use App\Reply;
+use App\User;
 use Illuminate\Http\Request;
 use App\Thread;
 use Illuminate\Support\Facades\Gate;

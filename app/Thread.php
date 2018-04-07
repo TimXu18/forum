@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Events\ThreadHasNewReply;
+use App\Events\ThreadReceivedNewReply;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ThreadWasUpdated;
 
@@ -61,7 +62,7 @@ class Thread extends Model
     {
         $reply = $this->replies()->create($reply);
 
-        event(new ThreadHasNewReply($this, $reply));
+        event(new ThreadReceivedNewReply($reply));
 
         // Prepare notification for all subscribers
         // $this->subscriptions() return Eloquent query object
@@ -74,15 +75,6 @@ class Thread extends Model
 //                $sub->notify($reply);
 //            });
         return $reply;
-    }
-
-
-    public function notifySubscriber($reply)
-    {
-        $this->subscriptions
-            ->where('user_id', '!=', $reply->user_id)
-            ->each
-            ->notify($reply);
     }
 
     public function channel()

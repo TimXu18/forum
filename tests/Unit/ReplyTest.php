@@ -30,4 +30,16 @@ class ReplyTest extends TestCase
 
         $this->assertFalse($reply->wasJustPublished());
     }
+
+    /** @test */
+    function it_can_detect_all_the_mentioned_users_in_the_body()
+    {
+        $reply = create('App\Reply', [
+            'body' => 'How are you @Kate, is @Frank there?'
+        ]);
+
+        $users = $reply->mentionedUsers($reply->body);
+
+        $this->assertEquals(['Kate', 'Frank'], $users);
+    }
 }
