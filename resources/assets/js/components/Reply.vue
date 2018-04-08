@@ -30,7 +30,7 @@
                     </form>
                 </div>
 
-                <div v-else v-text="body"></div>
+                <div v-else v-html="body"></div>
             </div>
 
             <!--@if(Auth::user()->can('update', $reply))-->
